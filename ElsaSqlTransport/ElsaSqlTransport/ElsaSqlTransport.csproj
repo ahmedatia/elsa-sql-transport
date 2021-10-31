@@ -1,18 +1,25 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
-    <UserSecretsId>6b2fe0dc-9451-409b-b974-44e34b8a6118</UserSecretsId>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<UserSecretsId>6b2fe0dc-9451-409b-b974-44e34b8a6118</UserSecretsId>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Elsa" Version="2.3.0" />
-    <PackageReference Include="Elsa.Caching.Rebus" Version="2.3.0" />
-    <PackageReference Include="Elsa.DistributedLocking.SqlServer" Version="2.3.0" />
-    <PackageReference Include="Elsa.Persistence.EntityFramework.MySql" Version="2.3.0" />
-    <PackageReference Include="Elsa.Persistence.EntityFramework.SqlServer" Version="2.3.0" />
-    <PackageReference Include="Rebus.SqlServer" Version="7.2.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
-  </ItemGroup>
+	<ItemGroup>
+		<Content Remove="NuGet.config" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Elsa" Version="2.4.0-preview.343" />
+		<PackageReference Include="Elsa.Activities.Temporal.Hangfire" Version="2.3.0" />
+		<PackageReference Include="Elsa.Caching.Rebus" Version="2.4.0-preview.343" />
+		<PackageReference Include="Elsa.DistributedLocking.SqlServer" Version="2.4.0-preview.343" />
+		<PackageReference Include="Elsa.Persistence.EntityFramework.MySql" Version="2.4.0-preview.343" />
+		<PackageReference Include="Elsa.Persistence.EntityFramework.SqlServer" Version="2.4.0-preview.343" />
+		<PackageReference Include="Rebus.SqlServer" Version="7.2.0" />
+		<PackageReference Include="Hangfire" Version="1.7.26" />
+		<PackageReference Include="Hangfire.SqlServer" Version="1.7.26" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+	</ItemGroup>
 
 </Project>

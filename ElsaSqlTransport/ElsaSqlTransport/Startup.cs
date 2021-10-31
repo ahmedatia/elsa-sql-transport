@@ -1,7 +1,9 @@
 using Elsa;
 using Elsa.Caching.Rebus.Extensions;
 using Elsa.Persistence.EntityFramework.Core.Extensions;
+using Elsa.Persistence.EntityFramework.SqlServer;
 using ElsaSqlTransport.Workflow;
+using Hangfire;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -22,49 +24,37 @@ namespace ElsaSqlTransport
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var sqlConnnectionString = Configuration.GetConnectionString("Sql") ?? throw new InvalidOperationException();
+            var dbConnectionString = Configuration.GetConnectionString("Sql") ?? throw new InvalidOperationException();
 
             services.AddElsa(elsa =>
             {
                 elsa.AddWorkflowsFrom<FirstWorkflow>();
                 elsa.AddActivitiesFrom<Step1>();
 
-                // configure for distributed hosting
+                // Elsa Distributed Hosting
                 // https://elsa-workflows.github.io/elsa-core/docs/hosting/hosting-distributed-hosting
 
-                // elsa persistence
-                elsa.UseEntityFrameworkPersistence(ef =>
-                {
-                    global::Elsa.Persistence.EntityFramework.SqlServer.DbContextOptionsBuilderExtensions.UseSqlServer(ef, sqlConnnectionString);
-                });
+                // Elsa persistence
+                elsa.UseEntityFrameworkPersistence(ef => DbContextOptionsBuilderExtensions.UseSqlServer(ef, dbConnectionString));
 
-                // distributed lock
-                elsa.ConfigureDistributedLockProvider(options => options.UseSqlServerLockProvider(sqlConnnectionString));
+                // Distributed lock
+                elsa.ConfigureDistributedLockProvider(options => options.UseSqlServerLockProvider(dbConnectionString));
 
-                // rebus
+                // Rebus
                 elsa.UseServiceBus(bus =>
                 {
-                    // Thrown when routing is commented out:
-                    // System.ArgumentException: 'Cannot get destination for message of type Elsa.Services.ExecuteWorkflowDefinitionRequest 
-                    // because it has not been mapped! 
-
-                    // Thrown when routing is uncommented:
-                    // System.InvalidOperationException: 'Attempted to register primary -> Rebus.Routing.IRouter, but a primary registration
-                    // already exists: primary -> Rebus.Routing.IRouter'
-
                     bus.Configurer
-                        .Transport(transport => transport.UseSqlServer(new SqlServerTransportOptions(sqlConnnectionString), bus.QueueName));
-                    //.Routing(route =>
-                    //{
-                    //    route.TypeBased().Map<ExecuteWorkflowDefinitionRequest>("execute-workflow");
-                    //});
+                        .Transport(t => t.UseSqlServer(new SqlServerTransportOptions(dbConnectionString), bus.QueueName))
+                        .Subscriptions(s => s.StoreInSqlServer(dbConnectionString, "ElsaQueueSubscriptions"));
                 });
 
                 // Distributed Cache Signal Provider
                 elsa.UseRebusCacheSignal();
+
+                // Hangfire
+                elsa.AddHangfireTemporalActivities(hangfire => hangfire.UseSqlServerStorage(dbConnectionString));
             });
 
             services.AddControllers();
@@ -73,8 +63,6 @@ namespace ElsaSqlTransport
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "ElsaSqlTransport", Version = "v1" });
             });
         }
-
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
